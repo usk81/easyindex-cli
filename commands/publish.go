@@ -38,7 +38,7 @@ const (
 	defaultSkip        = false
 	defaultIgnore      = false
 
-	envKeyCredentials = "EASYINDEX_CREDENTIAL_PATH"
+	envKeyCredentials = "EASYINDEX_CREDENTIALS_PATH"
 	envKeyLimit       = "EASYINDEX_REQUEST_LIMIT"
 	envKeySkip        = "EASYINDEX_SKIP"
 	envKeyIgnore      = "EASYINDEX_IGNORE_PRECHECK"
@@ -79,11 +79,6 @@ func publishCommandWithUsecase(cmd *cobra.Command, args []string, nt easyindex.N
 	if err != nil {
 		return errors.NewArgError(err, "bool")
 	}
-
-	fmt.Println("limit", limit)
-	fmt.Println("skip", skip)
-	fmt.Println("cred", cred)
-	fmt.Println("ignore", ignore)
 
 	result, err := f(nt, args, cred, limit, skip, ignore)
 	if err != nil {
