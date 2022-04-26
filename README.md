@@ -103,7 +103,7 @@ indexing.exe publish update --limit 200 https://example.com/foobar https://examp
 
 | flag | shorthand | description |
 |---|---|---|
-| `credential` | c | credential file path |
+| `credentials` | c | credential file path |
 | `ignore` | i | ignore pre-check |
 | `skip` | s | skip error pages |
 | `limit` | l | limit the number of API request |
@@ -112,7 +112,7 @@ indexing.exe publish update --limit 200 https://example.com/foobar https://examp
 
 | key | description |
 |---|---|
-| `EASYINDEX_CREDENTIAL_PATH` | credential file path |
+| `EASYINDEX_CREDENTIALS_PATH` | credential file path |
 | `EASYINDEX_IGNORE_PRECHECK` | ignore pre-check |
 | `EASYINDEX_SKIP` | skip error pages |
 | `EASYINDEX_REQUEST_LIMIT` | limit the number of API request |
