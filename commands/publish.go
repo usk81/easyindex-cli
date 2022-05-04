@@ -1,10 +1,19 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/gocarina/gocsv"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
+	"github.com/usk81/aveo"
+
 	"github.com/usk81/easyindex"
+	"github.com/usk81/easyindex/coordinator"
+	"github.com/usk81/easyindex/logger"
 
 	"github.com/usk81/easyindex-cli/errors"
 	"github.com/usk81/easyindex-cli/usecase"
@@ -15,6 +24,7 @@ var (
 		Use:   "publish",
 		Short: "Notifies that a URL has been updated or deleted.",
 		Long:  "Notifies that a URL has been updated or deleted.",
+		RunE:  publishByFileCommand,
 	}
 
 	publishUpdatedCmd = &cobra.Command{
@@ -47,6 +57,8 @@ const (
 	flagKeyLimit       = "limit"
 	flagKeySkip        = "skip"
 	flagKeyIgnore      = "ignore"
+	flagKeyCSV         = "csv"
+	flagKeyJSON        = "json"
 )
 
 func printPublishCallResponse(r *usecase.PublishResult) {
@@ -62,25 +74,90 @@ func printPublishCallResponse(r *usecase.PublishResult) {
 	}
 }
 
-func publishCommandWithUsecase(cmd *cobra.Command, args []string, nt easyindex.NotificationType, f usecase.PublishFunc) error {
-	limit, err := GetIntFlagOrEnv(cmd.Flags(), flagKeyLimit, envKeyLimit, defaultLimit)
+func publishByFileCommand(cmd *cobra.Command, args []string) error {
+	return publishByFileCommandWithFileSystem(cmd, args, aveo.NewOs(), afero.NewOsFs(), usecase.PublishBulk)
+}
+
+func publishByFileCommandWithFileSystem(cmd *cobra.Command, args []string, env aveo.Env, fs afero.Fs, f usecase.PublishBulkFunc) error {
+	limit, cred, ignore, skip, err := getOptions(env, cmd.Flags())
 	if err != nil {
-		return errors.NewArgError(err, "int")
+		return err
 	}
-	skip, err := GetBoolFlagOrEnv(cmd.Flags(), flagKeySkip, envKeySkip, defaultSkip)
-	if err != nil {
-		return errors.NewArgError(err, "bool")
-	}
-	cred, err := GetStringFlagOrEnv(cmd.Flags(), flagKeyCredentials, envKeyCredentials, defaultCredentials)
+	rq := []*usecase.PublishRequest{}
+	cp, err := cmd.Flags().GetString(flagKeyCSV)
 	if err != nil {
 		return errors.NewArgError(err, "string")
 	}
-	ignore, err := GetBoolFlagOrEnv(cmd.Flags(), flagKeyIgnore, envKeyIgnore, defaultIgnore)
-	if err != nil {
-		return errors.NewArgError(err, "bool")
+	if cp != "" {
+		bs, err := afero.ReadFile(fs, cp)
+		if err != nil {
+			return err
+		}
+		if err = gocsv.UnmarshalBytes(bs, &rq); err != nil {
+			return err
+		}
+	} else {
+		jp, err := cmd.Flags().GetString(flagKeyJSON)
+		if err != nil {
+			return errors.NewArgError(err, "string")
+		}
+		if jp != "" {
+			bs, err := afero.ReadFile(fs, cp)
+			if err != nil {
+				return err
+			}
+			if err = json.Unmarshal(bs, &rq); err != nil {
+				return err
+			}
+		}
 	}
 
-	result, err := f(nt, args, cred, limit, skip, ignore)
+	l, err := logger.New("debug")
+	if err != nil {
+		return err
+	}
+	mgr, err := coordinator.New(coordinator.Config{
+		CredentialsFile: &cred,
+		IgnorePreCheck:  ignore,
+		Skip:            skip,
+		Logger:          l,
+	})
+	if err != nil {
+		return err
+	}
+
+	result, err := f(mgr, rq, limit)
+	if err != nil {
+		return err
+	}
+	if result == nil {
+		return fmt.Errorf("unknown error: can not get result")
+	}
+	printPublishCallResponse(result)
+	return nil
+}
+
+func publishCommandWithUsecase(cmd *cobra.Command, args []string, env aveo.Env, nt easyindex.NotificationType, f usecase.PublishFunc) error {
+	limit, cred, ignore, skip, err := getOptions(env, cmd.Flags())
+	if err != nil {
+		return err
+	}
+
+	l, err := logger.New("debug")
+	if err != nil {
+		return err
+	}
+	mgr, err := coordinator.New(coordinator.Config{
+		CredentialsFile: &cred,
+		IgnorePreCheck:  ignore,
+		Skip:            skip,
+		Logger:          l,
+	})
+	if err != nil {
+		return err
+	}
+
+	result, err := f(mgr, nt, args, limit)
 	if err != nil {
 		return err
 	}
@@ -92,11 +169,27 @@ func publishCommandWithUsecase(cmd *cobra.Command, args []string, nt easyindex.N
 }
 
 func publishUpdatedCommand(cmd *cobra.Command, args []string) error {
-	return publishCommandWithUsecase(cmd, args, easyindex.NotificationTypeUpdated, usecase.Publish)
+	return publishCommandWithUsecase(cmd, args, aveo.NewOs(), easyindex.NotificationTypeUpdated, usecase.Publish)
 }
 
 func publishDeletedCommand(cmd *cobra.Command, args []string) error {
-	return publishCommandWithUsecase(cmd, args, easyindex.NotificationTypeDeleted, usecase.Publish)
+	return publishCommandWithUsecase(cmd, args, aveo.NewOs(), easyindex.NotificationTypeDeleted, usecase.Publish)
+}
+
+func getOptions(env aveo.Env, fs *pflag.FlagSet) (limit int, cred string, ignore, skip bool, err error) {
+	if limit, err = GetIntFlagOrEnv(env, fs, flagKeyLimit, envKeyLimit, defaultLimit); err != nil {
+		return 0, "", false, false, errors.NewArgError(err, "int")
+	}
+	if skip, err = GetBoolFlagOrEnv(env, fs, flagKeySkip, envKeySkip, defaultSkip); err != nil {
+		return 0, "", false, false, errors.NewArgError(err, "bool")
+	}
+	if cred, err = GetStringFlagOrEnv(env, fs, flagKeyCredentials, envKeyCredentials, defaultCredentials); err != nil {
+		return 0, "", false, false, errors.NewArgError(err, "string")
+	}
+	if ignore, err = GetBoolFlagOrEnv(env, fs, flagKeyIgnore, envKeyIgnore, defaultIgnore); err != nil {
+		return 0, "", false, false, errors.NewArgError(err, "bool")
+	}
+	return
 }
 
 func setFlagForPublishCommand(cmd *cobra.Command) {
@@ -116,5 +209,9 @@ func init() {
 		setFlagForPublishCommand(cmd)
 		publishCmd.AddCommand(cmd)
 	}
+	setFlagForPublishCommand(publishCmd)
+	flags := publishCmd.Flags()
+	flags.StringP(flagKeyCSV, "C", "", "path of csv file to input")
+	flags.StringP(flagKeyJSON, "j", "", "path of json file to input")
 	RootCmd.AddCommand(publishCmd)
 }

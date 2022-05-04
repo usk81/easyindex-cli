@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/usk81/aveo"
 )
 
 var (
@@ -39,13 +40,13 @@ func Exit(err error, codes ...int) {
 }
 
 // GetBoolFlagOrEnv ...
-func GetBoolFlagOrEnv(fs *pflag.FlagSet, name string, envKey string, def bool) (bool, error) {
+func GetBoolFlagOrEnv(env aveo.Env, fs *pflag.FlagSet, name string, envKey string, def bool) (bool, error) {
 	v, err := fs.GetBool(name)
 	if err != nil {
 		return false, err
 	}
 	if v == def {
-		if ev := os.Getenv(envKey); ev != "" {
+		if ev := env.Getenv(envKey); ev != "" {
 			b, err := strconv.ParseBool(ev)
 			if err != nil {
 				return false, err
@@ -57,13 +58,13 @@ func GetBoolFlagOrEnv(fs *pflag.FlagSet, name string, envKey string, def bool) (
 }
 
 // GetIntFlagOrEnv ...
-func GetIntFlagOrEnv(fs *pflag.FlagSet, name string, envKey string, def int) (int, error) {
+func GetIntFlagOrEnv(env aveo.Env, fs *pflag.FlagSet, name string, envKey string, def int) (int, error) {
 	v, err := fs.GetInt(name)
 	if err != nil {
 		return 0, err
 	}
 	if v == def {
-		if ev := os.Getenv(envKey); ev != "" {
+		if ev := env.Getenv(envKey); ev != "" {
 			i, err := strconv.Atoi(ev)
 			if err != nil {
 				return 0, err
@@ -75,15 +76,16 @@ func GetIntFlagOrEnv(fs *pflag.FlagSet, name string, envKey string, def int) (in
 }
 
 // GetStringFlagOrEnv ...
-func GetStringFlagOrEnv(fs *pflag.FlagSet, name string, envKey string, def string) (string, error) {
+func GetStringFlagOrEnv(env aveo.Env, fs *pflag.FlagSet, name string, envKey string, def string) (string, error) {
 	v, err := fs.GetString(name)
 	if err != nil {
 		return "", err
 	}
 	if v == def || v == "" {
-		if ev := os.Getenv(envKey); ev != "" {
+		if ev := env.Getenv(envKey); ev != "" {
 			return ev, nil
 		}
+		v = def
 	}
 	return v, nil
 }

@@ -3,7 +3,6 @@ package usecase
 import (
 	"github.com/usk81/easyindex"
 	"github.com/usk81/easyindex/coordinator"
-	"github.com/usk81/easyindex/logger"
 )
 
 type (
@@ -15,11 +14,11 @@ type (
 	}
 
 	// PublishFunc is defined Publish usecase function
-	PublishFunc func(nt easyindex.NotificationType, urls []string, cf string, limit int, skip bool, ignorePrecheck bool) (result *PublishResult, err error)
+	PublishFunc func(mgr coordinator.Manager, nt easyindex.NotificationType, urls []string, limit int) (result *PublishResult, err error)
 )
 
 // Publish is usecase of requesting Google Indexing publish API
-func Publish(nt easyindex.NotificationType, urls []string, cf string, limit int, skip bool, ignorePrecheck bool) (result *PublishResult, err error) {
+func Publish(mgr coordinator.Manager, nt easyindex.NotificationType, urls []string, limit int) (result *PublishResult, err error) {
 	if len(urls) == 0 {
 		return
 	}
@@ -30,19 +29,7 @@ func Publish(nt easyindex.NotificationType, urls []string, cf string, limit int,
 			NotificationType: nt,
 		}
 	}
-	l, err := logger.New("debug")
-	if err != nil {
-		return
-	}
-	s, err := coordinator.New(coordinator.Config{
-		CredentialsFile: &cf,
-		Logger:          l,
-		Skip:            skip,
-	})
-	if err != nil {
-		return
-	}
-	total, count, _, skips, err := s.Publish(rs, limit)
+	total, count, _, skips, err := mgr.Publish(rs, limit)
 	if err != nil {
 		return
 	}
