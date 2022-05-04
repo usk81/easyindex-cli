@@ -15,23 +15,22 @@ ref. [Google Search Central](https://developers.google.com/search/apis/indexing-
 
 ### install
 
-Mac:
+Mac/Linux:
 
 ```sh
-# example
-
+wget -O- https://github.com/usk81/easyindex-cli/releases/download/{version}/easyindex-cli_{version}_{os}.tar.gz | tar xz
+# e.g.
+# mac M1 / version v0.0.1
+# wget -O- https://github.com/usk81/easyindex-cli/releases/download/v0.0.1/easyindex-cli_v0.0.1_darwin_ard64.tar.gz | tar xz
 ```
 
-Linux:
+Windows (PowerShell):
 
 ```sh
-
-```
-
-Windows:
-
-```sh
-
+iwr -outf easyindex-cli.tar.gz https://github.com/usk81/easyindex-cli/releases/download/{version}/easyindex-cli_{version}_{os}.tar.gz
+# e.g.
+# 64bit / version v0.0.1
+# iwr -outf easyindex-cli.tar.gz https://github.com/usk81/easyindex-cli/releases/download/{version}/easyindex-cli_v0.0.1_windows_amd64.tar.gz
 ```
 
 ### Usage
@@ -42,20 +41,20 @@ Mac / Linux:
 
 ```sh
 ## updated
-indexing publish updated -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
+easyindex publish updated -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
  
 ## deleted
-indexing.exe publish deleted -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
+easyindex.exe publish deleted -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
 ```
 
 Windows:
 
 ```sh
 ## updated
-indexing publish updated -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
+easyindex publish updated -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
  
 ## deleted
-indexing.exe publish deleted -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
+easyindex.exe publish deleted -c (your credential json file path) https://example.com/foobar https://example.com/fizzbizz
 ```
 
 ### basic usage
@@ -65,10 +64,10 @@ indexing.exe publish deleted -c (your credential json file path) https://example
 
 ```sh
 ## Mac /Linux:
-indexing publish updated https://example.com/foobar https://example.com/fizzbizz
+easyindex publish updated https://example.com/foobar https://example.com/fizzbizz
 
 ## Windows:
-indexing.exe publish updated https://example.com/foobar https://example.com/fizzbizz
+easyindex.exe publish updated https://example.com/foobar https://example.com/fizzbizz
 ```
 
 ### skip error pages
@@ -79,10 +78,10 @@ indexing.exe publish updated https://example.com/foobar https://example.com/fizz
 
 ```sh
 ## Mac /Linux:
-indexing publish updated --skip https://example.com/foobar https://example.com/fizzbizz
+easyindex publish updated --skip https://example.com/foobar https://example.com/fizzbizz
 
 ## Windows:
-indexing.exe publish updated --skip https://example.com/foobar https://example.com/fizzbizz
+easyindex.exe publish updated --skip https://example.com/foobar https://example.com/fizzbizz
 ```
 
 ### set quota
@@ -93,10 +92,10 @@ indexing.exe publish updated --skip https://example.com/foobar https://example.c
 
 ```sh
 ## Mac /Linux:
-indexing publish update --limit 200 https://example.com/foobar https://example.com/fizzbizz
+easyindex publish updated --limit 200 https://example.com/foobar https://example.com/fizzbizz
 
 ## Windows:
-indexing.exe publish update --limit 200 https://example.com/foobar https://example.com/fizzbizz
+easyindex.exe publish updated --limit 200 https://example.com/foobar https://example.com/fizzbizz
 ```
 
 ### flags
