@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/gocarina/gocsv v0.0.0-20220503141554-3986f9cfe36b
 	github.com/spf13/afero v1.8.2
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/usk81/aveo v0.0.0-20220504201401-c369c70737fb
 	github.com/usk81/easyindex v0.0.0-20220504181151-846b9d761115
